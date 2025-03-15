@@ -40,4 +40,4 @@ E el oblior
           ya hice mucho
             me duelen los dedos)
 ```
-![LIDL](https://pt.m.wikipedia.org/wiki/Ficheiro:Lidl-Logo.svg)
+![LIDL](https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Lidl-Logo.svg/1024px-Lidl-Logo.svg.png)
