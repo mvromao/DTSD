@@ -12,7 +12,7 @@ un <code>punto arriba</code> mianon. Por
 ##  A avisarci que el ostron se divorgue a chefe
 Ventidato a Chenna
 - permanear
-- en
+      - en
 - [Puro](https://changed.fandom.com/wiki/Puro "⠀⠀⠀⠀⠀⣼⣶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣶⣆⠀⠀⠀⠀
 ⠀⠀⠀⠀⢠⣿⣿⣿⣷⣄⠀⠀⢀⣤⠀⠀⢀⣴⣿⣿⣿⡇⠀⠀⠀⠀
 ⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣦⣾⣿⣿⣀⣴⣿⣿⣿⣿⣿⣷⠀⠀⠀⠀
