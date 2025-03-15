@@ -11,9 +11,9 @@ un <code>punto arriba</code> mianon. Por
 # Nella le ca Capella
 ##  A avisarci que el ostron se divorgue a chefe
 Ventidato a Chenna
--permanear
--en
--[Puro](https://changed.fandom.com/wiki/Puro "⠀⠀⠀⠀⠀⣼⣶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣶⣆⠀⠀⠀⠀
+- permanear
+- en
+- [Puro](https://changed.fandom.com/wiki/Puro "⠀⠀⠀⠀⠀⣼⣶⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣶⣆⠀⠀⠀⠀
 ⠀⠀⠀⠀⢠⣿⣿⣿⣷⣄⠀⠀⢀⣤⠀⠀⢀⣴⣿⣿⣿⡇⠀⠀⠀⠀
 ⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣦⣾⣿⣿⣀⣴⣿⣿⣿⣿⣿⣷⠀⠀⠀⠀
 ⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀
@@ -27,7 +27,7 @@ Ventidato a Chenna
 ⣀⣠⣤⣿⣿⣿⣿⣿⣿⣷⣤⣀⣀⣤⣄⣀⣠⣾⣿⣿⣿⣿⣿⣿⣿⠇
 ⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣯⣁⠀
 ⠀⠀⢉⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿")
--de Cazzi
+- de Cazzi
 E el oblior 
 >exposto,
 >>#### Macolcazzo
