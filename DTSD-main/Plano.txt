@@ -1,0 +1,16 @@
+Portanto, temos:
+	Power & Energy manglement:
+		Para gerar dados:
+			Candeeiro	-	a meio do fio meter um sensor de corrente ligado a palmas
+			Mais cenas
+			Mais cenas em script/cenas de robótica
+		Para aquisição:
+			Sensores diversos
+		Para envio e guardar os dados:
+			ESP32 para enviar para a net (Thingspeak/MQTT/Grafana/Prometheus/Influx) (Teamspeak) (User disconnected)
+		Funny:	
+			LCD para mostrar consumo atual (ou talvez botões para controlar menus tipo Impressoras Prusa)
+			LEDs 
+			Matrix de LEDs para gif de fogo (Júlio)
+			Caixa/Carcaça em madeira ou em 8D bineural audio (ASMR) para guardar o sistema
+		
