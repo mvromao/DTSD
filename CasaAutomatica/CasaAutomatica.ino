@@ -4,22 +4,17 @@
 #include <Adafruit_SH110X.h>
 #include "arduino_secrets.h"
 #include "thingProperties.h"
+//#include <HTTPClient.h>
 
 // CloudLight luz_quarto_direita;
 // CloudLight luz_quarto_esquerda;
 // CloudLight luz_quarto_tras;
 // CloudLight luz_sala;
-// CloudLight luz_garagem;
+// CloudLight luz_garagem
 
-#if defined(ESP32)
 #include <WiFiMulti.h>
 WiFiMulti wifiMulti;
 #define DEVICE "ESP32"
-#elif defined(ESP8266)
-#include <ESP8266WiFiMulti.h>
-ESP8266WiFiMulti wifiMulti;
-#define DEVICE "ESP8266"
-#endif
 
 #include <InfluxDbClient.h>
 #include <InfluxDbCloud.h>
