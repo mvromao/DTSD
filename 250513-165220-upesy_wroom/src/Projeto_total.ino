@@ -4,8 +4,8 @@
 // #include <Adafruit_GFX.h>
 // #include <Adafruit_SH110X.h>
 #include "arduino_secrets.h"
-//#include <InfluxDbClient.h> // Influx DB Libraries
-//#include <InfluxDbCloud.h>	// Influx DB Libraries
+#include <InfluxDbClient.h> // Influx DB Libraries
+#include <InfluxDbCloud.h>	// Influx DB Libraries
 #include <ESP32Servo.h>
 #include <DHT.h>
 #include <WiFiMulti.h>
@@ -13,34 +13,18 @@ WiFiMulti wifiMulti;
 #define DEVICE "ESP32"
 
 // Declare InfluxDB client instance with preconfigured InfluxCloud certificate
-//InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN);
+InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN);
 
 // Declare Data point
-// Point sensor("wifi_status");
-// Point distancia("distancia");
-// Point luz("luz");
-// Point temperatura("temperatura");
-// Point humidade("humidade");
-// Point lux("lux");
+//Point sensor("wifi_status");
+//Point distancia("distancia");
+//Point luz("luz");
+//Point temperatura("temperatura");
+//Point humidade("humidade");
+//Point lux("lux");
 
 //Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
-/*
-// Pinos dos leds a interagir com o IoT Cloud
-#define LED_SALA 25
-#define LED_QUARTO_ESQUERDA 32
-#define LED_QUARTO_DIREITA 33
-#define LED_QUARTO_TRAS 26
-#define LED_GARAGEM 27
 
-#define LDR_PIN 4
-#define DHTPIN 16           // GPIO pin where the DHT22 is connected
-#define DHTTYPE DHT22      // Define sensor type as DHT22
-#define TRIG_PIN 17
-#define ECHO_PIN 18
-#define POT_PIN 19
-#define BUZZ_PIN 14
-#define SERVO_PIN 5
-*/
 // Pinos dos leds a interagir com o IoT Cloud
 #define LED_SALA 25
 #define LED_QUARTO_ESQUERDA 32
@@ -160,8 +144,8 @@ void loop()
 	// Read LDR resistance and lux value
 	//luxValue = resistanceToLux(calculateLDRResistance(ldrValue));
 	luxValue = LDRToLux(ldrValue); // Scale to 0-1000 lux
-	Serial.print("LDR Value: ");
-	Serial.println(ldrValue);
+	//Serial.print("LDR Value: ");
+	//Serial.println(ldrValue);
 	Serial.print("Lux Value: ");
 	Serial.println(luxValue);
 
@@ -229,14 +213,15 @@ void loop()
 }
 void checkTemperature(float temperature)
 {
-	if (temperature > 20) //Ta idiota de proposito para testar
+	if (temperature >= 20) //Ta idiota de proposito para testar
 	{ // Threshold for temperature detection
 		digitalWrite(LED_GARAGEM, HIGH);
 	}
-	else
+	if(temperature < 20 && temperature > 0)
 	{
 		digitalWrite(LED_GARAGEM, LOW);
 	}
+
 }
 
 void checkHumidity(float humidity)
@@ -254,19 +239,17 @@ void checkHumidity(float humidity)
 
 void checkDistance(float distance)
 {
-	if (distance < 2)
+	if (distance < 4)
 	{ // em cm
 		Serial.println("Object detected");
-		servoMotor.write(30); // Turn the servo to 30 degrees
+		servoMotor.write(0); 
 		delay(1000);		  // Wait for the servo to reach the position
-		servoMotor.detach();  // Detach the servo to save power
 	}
 	else
 	{
 		Serial.println("No object detected");
-		servoMotor.write(0);  // Turn the servo to 0 degrees
+		servoMotor.write(130);  // Turn the servo to 0 degrees
 		delay(1000);		  // Wait for the servo to reach the position
-		servoMotor.detach();  // Detach the servo to save power
 	}
 }
 
