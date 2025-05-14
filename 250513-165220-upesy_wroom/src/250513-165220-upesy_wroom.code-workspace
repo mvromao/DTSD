@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "250513-165220-upesy_wroom",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"iterator": "cpp"
+		}
+	}
+}

@@ -1,29 +1,88 @@
+// Variávels de DEBUG ====================
+#define WIFI_ENABLED 1
+#define INFLUXDB_ENABLED 1
+#define OLED_ENABLED 1
+// =======================================
+
 #include <SPI.h>
 #include <Wire.h>
 #include <math.h>
-// #include <Adafruit_GFX.h>
-// #include <Adafruit_SH110X.h>
+
 #include "arduino_secrets.h"
-#include <InfluxDbClient.h> // Influx DB Libraries
-#include <InfluxDbCloud.h>	// Influx DB Libraries
 #include <ESP32Servo.h>
-#include <DHT.h>
-#include <WiFiMulti.h>
-WiFiMulti wifiMulti;
+#include <DHTesp.h>
+
+// Initialize Wifi if enabled
+#if WIFI_ENABLED
+	#include <WiFi.h>
+	void startWiFi() {
+		WiFi.mode(WIFI_STA);
+		WiFi.begin(SECRET_SSID, SECRET_OPTIONAL_PASS);
+		while (WiFi.status() != WL_CONNECTED) {
+			delay(1000);
+			Serial.print(".");
+		}
+		Serial.println("Connected to WiFi");
+		setenv("TZ", TZ_INFO, 1);
+		tzset();
+		configTime(0, 0, "pool.ntp.org", "time.nis.gov");
+	}
+#endif
+
 #define DEVICE "ESP32"
 
-// Declare InfluxDB client instance with preconfigured InfluxCloud certificate
-InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN);
+#if OLED_ENABLED
+	#include <Adafruit_GFX.h>
+	#include <Adafruit_SH110X.h>
+	Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
+	void startOLED() {
+	// Initialize the OLED display
+	if(OLED_ENABLED == 1) {	
+		delay(300);
+		display.begin(0x3C, true); // Address 0x3C default
+		display.setRotation(1);
+		display.setTextSize(1);
+		display.setTextColor(SH110X_WHITE);
+		display.setCursor(0, 0);
+		display.println("Starting...");
+		display.display();
+	}
+	}
+	void writeToOLED(String text)
+	{
+		display.clearDisplay();
+		display.setCursor(0, 0);
+		display.println(text);
+		display.display();
+	}
+#endif
 
-// Declare Data point
-//Point sensor("wifi_status");
-//Point distancia("distancia");
-//Point luz("luz");
-//Point temperatura("temperatura");
-//Point humidade("humidade");
-//Point lux("lux");
+// Declare Data points if InfluxDB is enabled
+#if INFLUXDB_ENABLED 
+	#include <InfluxDbClient.h> // Influx DB Libraries
+	#include <InfluxDbCloud.h>	// Influx DB Libraries
+	
+	Point sensors("Sensores");
+	Point luzes("Luzes");
+	Point garagem("Garagem");	
 
-//Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
+	InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKEN);
+
+	void startInfluxDB()
+	{
+		if (client.validateConnection())
+		{
+			Serial.print("Connected to InfluxDB: ");
+			Serial.println(client.getServerUrl());
+		}
+		else
+		{
+			Serial.print("InfluxDB connection failed: ");
+			Serial.println(client.getLastErrorMessage());
+		}
+	}
+#endif
+
 
 // Pinos dos leds a interagir com o IoT Cloud
 #define LED_SALA 25
@@ -32,20 +91,19 @@ InfluxDBClient client(INFLUXDB_URL, INFLUXDB_ORG, INFLUXDB_BUCKET, INFLUXDB_TOKE
 #define LED_QUARTO_TRAS 26
 #define LED_GARAGEM 27
 
-#define LDR_PIN 4
-#define DHTPIN 16           // GPIO pin where the DHT22 is connected
-#define DHTTYPE DHT22      // Define sensor type as DHT22
+#define LDR_PIN 36
+#define DHT_PIN 16
 #define TRIG_PIN 17
 #define ECHO_PIN 18
 #define POT_PIN 19
 #define BUZZ_PIN 14
 #define SERVO_PIN 5
 
-DHT dht(DHTPIN, DHTTYPE);  // Create DHT sensor object
+DHTesp dht;  // Create DHT sensor object
 Servo servoMotor; // Create a Servo object
 
 float durationValue, distanceValue, luxValue, temperatureValue, humidityValue;
-int potValue, tempValue, ldrValue, pwmValue;
+int potValue, tempValue, ldrValue, pwmValue, portaState, dhtIndex = 0;
 
 void startLEDs()
 {
@@ -60,11 +118,10 @@ void startLEDs()
 
 	pinMode(TRIG_PIN, OUTPUT);
 	pinMode(ECHO_PIN, INPUT);
-
-	//VAI TE FODER MARCO0S
 	
 	pinMode(LDR_PIN, INPUT);
 }
+
 
 void startSerial()
 {
@@ -73,84 +130,48 @@ void startSerial()
 }
 
 void setup(){
-
+	dht.setup(DHT_PIN, DHTesp::DHT22); // Connect DHT sensor to GPIO 17
 	startSerial();
 	startLEDs();
+	if(OLED_ENABLED == 1)
+		startOLED();
 	Serial.println("Starting...");
-	// wait for the OLED to power up
-	//display.begin(0x3C, true); // Address 0x3C default
 
 	servoMotor.attach(SERVO_PIN); // Attach the servo to the defined pin
     servoMotor.write(0);          // Set the initial position of the servo to 0 degrees
 
-	//display.display();
 	delay(1000);
+	if(WIFI_ENABLED == 1)
+		startWiFi();
 
-	// Clear the buffer.
-	// display.clearDisplay();
-	// display.display();
-	// display.setRotation(1);
-	// display.setTextSize(1);
-	// display.setTextColor(SH110X_WHITE);
-	// display.setCursor(0, 0);
-	// display.println("Attemptingto connectto network");
-	// display.println(SECRET_SSID);
-	// display.display();
-	// WiFi.mode(WIFI_STA);
-	// wifiMulti.addAP(SECRET_SSID, SECRET_OPTIONAL_PASS);
+	if(INFLUXDB_ENABLED == 1) {
+		startInfluxDB();
+		sensors.addTag("device", DEVICE);
+		
+	}
 
-	// while (wifiMulti.run() != WL_CONNECTED)
-	// {
-	// 	// display.print(".");
-	// 	// display.display();
-	// 	Serial.print(".");
-	// 	delay(100);
-	// }
-	// Serial.println();
-
-	// display.println("\nConnection Success!");
-	// display.display();
-
-	// timeSync(TZ_INFO, "pool.ntp.org", "time.nis.gov");
-
-	// Conectar ao InfluxDB
-	// if (client.validateConnection())
-	// {
-	// 	Serial.print("Connected to InfluxDB: ");
-	// 	Serial.println(client.getServerUrl());
-	// }
-	// else
-	// {
-	// 	Serial.print("InfluxDB connection failed: ");
-	// 	Serial.println(client.getLastErrorMessage());
-	// }
-
-	// sensor.addTag("device", DEVICE);
-	// sensor.addTag("SSID", WiFi.SSID());
 	Serial.println("Finished setup");
 }
 
 void loop()
 {
+	dhtIndex++;
 	// Read potentiometer value
 	//potValue = analogRead(POT_PIN);
 	//pwmValue = map(potValue, 0, 4095, 0, 255); // Scale to 8-bit PWM (0-255)
-	Serial.print("Potentiometer Value: ");
-	Serial.println(potValue);
 
 	// Read LDR value
 	ldrValue = analogRead(LDR_PIN);
 
 	// Read LDR resistance and lux value
-	//luxValue = resistanceToLux(calculateLDRResistance(ldrValue));
-	luxValue = LDRToLux(ldrValue); // Scale to 0-1000 lux
-	//Serial.print("LDR Value: ");
-	//Serial.println(ldrValue);
-	Serial.print("Lux Value: ");
-	Serial.println(luxValue);
+	luxValue = LDRToLux(ldrValue);
+	Serial.print("LDR Value: ");
+	Serial.print(ldrValue);
+	// Serial.print("Lux Value: ");
+	// Serial.println(luxValue);
 
 	// DHT sensor
-	temperatureValue = getTemperatureCelsius()*2;
+	temperatureValue = getTemperatureCelsius();
 	humidityValue = getHumidityPercentage();
 	Serial.print("Temperature: ");
 	Serial.print(temperatureValue);
@@ -165,55 +186,62 @@ void loop()
 	Serial.println(" cm");
 
 	// Change house parameters
-	checkTemperature(temperatureValue);
 	checkDistance(distanceValue);
-	checkLight(luxValue);
-  	checkHumidity(humidityValue);
-
+	checkLight(ldrValue);
+	Serial.print("Porta: ");
+	Serial.println(portaState? "Aberta" : "Fechada");
+	
+	if (dhtIndex == 4) {
+		checkTemperature(temperatureValue);
+		checkHumidity(humidityValue);
+		dhtIndex = 0;
+	}
 	// Send values to InfluxDB
-	// humidade.addField("humidade", humidityValue);
-	// temperatura.addField("temperatura", temperatureValue);
-	// distancia.addField("distancia", distanceValue);
-	// lux.addField("Lux", luxValue); // em lux
+	if(INFLUXDB_ENABLED == 1)
+	{
+		//sensors.addField("pot", potValue);
+		sensors.addField("LDR", ldrValue);
+		sensors.addField("lux", luxValue);
+		sensors.addField("humidade", humidityValue);
+		sensors.addField("temperatura", temperatureValue);
+		sensors.addField("distancia", distanceValue);
+		
+		sensors.addField("rssi", WiFi.RSSI());
 
-	// display.clearDisplay();
-	// display.setCursor(0, 0);
-	delay(10); // Small delay to smooth readings
+		luzes.addField("Sala", digitalRead(LED_SALA));
+		luzes.addField("Quarto_Esquerda", digitalRead(LED_QUARTO_ESQUERDA));
+		luzes.addField("Quarto_Direita", digitalRead(LED_QUARTO_DIREITA));
+		luzes.addField("Quarto_Tras", digitalRead(LED_QUARTO_TRAS));
+		luzes.addField("Garagem", digitalRead(LED_GARAGEM));
 
-	//yield();
-	// display.display();
+		garagem.addField("Estado da Porta", portaState);
+		
+		if(WiFi.status() != WL_CONNECTED)
+		{
+			Serial.println("WiFi connection lost");
+			startWiFi();
+		}
 
-	// Clear fields for reusing the point. Tags will remain the same as set above.
-	// sensor.clearFields();
-	// luz.clearFields();
+		// Send data to InfluxDB
+		if (!client.writePoint(sensors) || !client.writePoint(luzes) || !client.writePoint(garagem))
+		 {
+		 Serial.print("InfluxDB write failed: ");
+		 Serial.println(client.getLastErrorMessage());
+		 }
+	}
 
-	// Store measured value into point
-	// Report RSSI of currently connected network
-	// sensor.addField("rssi", WiFi.RSSI());
-
-	// Print what are we exactly writing
-	// Serial.print("Writing: ");
-	// Serial.println(sensor.toLineProtocol());
-	// Serial.println(luz.toLineProtocol());
-
-	// Check WiFi connection and reconnect if needed
-	// if (wifiMulti.run() != WL_CONNECTED)
-	// {
-	// 	Serial.println("Wifi connection lost");
-	// }
-
-	// Enviar dados para o InfluxDB
-	//if (!client.writePoint(sensor) || !client.writePoint(luz) || !client.writePoint(temperatura) || !client.writePoint(humidade) || !client.writePoint(lux) || !client.writePoint(distancia))
-	//	{
-	//		Serial.print("InfluxDB write failed: ");
-	//		Serial.println(client.getLastErrorMessage());
-	//	}
-
-	Serial.println("Waiting 1 second");
+	delay(500);
+	Serial.println("Waiting 500 milli");
 }
+
+
+//	===========================================
+//			HOUSE UPDATING FUNCTIONS
+//	===========================================
+
 void checkTemperature(float temperature)
 {
-	if (temperature >= 20) //Ta idiota de proposito para testar
+	if (temperature >= 20)
 	{ // Threshold for temperature detection
 		digitalWrite(LED_GARAGEM, HIGH);
 	}
@@ -223,7 +251,6 @@ void checkTemperature(float temperature)
 	}
 
 }
-
 void checkHumidity(float humidity)
 {
   if (humidity > 50) // Threshold for humidity detection
@@ -236,26 +263,25 @@ void checkHumidity(float humidity)
 
   }
 }
-
 void checkDistance(float distance)
 {
-	if (distance < 4)
-	{ // em cm
-		Serial.println("Object detected");
-		servoMotor.write(0); 
-		delay(1000);		  // Wait for the servo to reach the position
-	}
-	else
-	{
-		Serial.println("No object detected");
-		servoMotor.write(130);  // Turn the servo to 0 degrees
-		delay(1000);		  // Wait for the servo to reach the position
-	}
+	if(!(distance == -1))
+		if (distance < 4 && distance > 0)
+		{ 
+			Serial.println("Object detected");
+			servoMotor.write(0); 
+			portaState = 1; // Open the door
+		}
+		else
+		{
+			Serial.println("No object detected");
+			servoMotor.write(130);  // Turn the servo to 0 degrees
+			portaState = 0; // Close the door
+		}
 }
-
 void checkLight(float lux)
 {
-	if (lux < 1500)
+	if (lux > 1500)
 	{ // Threshold for light detection
 		digitalWrite(LED_SALA, HIGH);
 		digitalWrite(LED_QUARTO_ESQUERDA, HIGH);
@@ -271,7 +297,10 @@ void checkLight(float lux)
 	}
 }
 
-// Function to measure distance using HC-SR04
+//	===========================================
+//			DATA ACQUIRING FUNCTIONS
+//	===========================================
+
 float getDistanceCM()
 {
 	// Send a 10us HIGH pulse on the trigger pin
@@ -295,14 +324,12 @@ float getDistanceCM()
 
 	return distance;
 }
-
-// Updated DHT reading functions with retries and delays
 float getTemperatureCelsius()
 {
     float temp;
     for (int i = 0; i < 3; i++) // Retry up to 3 times
     {
-        temp = dht.readTemperature(); // Reads in Celsius by default
+        temp = dht.getTemperature(); // Reads in Celsius by default
         if (!isnan(temp))
         {
             return temp; // Return valid temperature
@@ -310,25 +337,26 @@ float getTemperatureCelsius()
         delay(1000); // Small delay before retrying
     }
     Serial.println("Failed to read temperature after retries!");
+	Serial.println(temp);
     return -999.0; // Error code
 }
-
 float getHumidityPercentage()
 {
     float hum;
     for (int i = 0; i < 3; i++) // Retry up to 3 times
     {
-        hum = dht.readHumidity();
+        hum = dht.getHumidity();
         if (!isnan(hum))
         {
-            return hum / 100; // Return valid humidity as a percentage
+			
+            return hum; // Return valid humidity as a percentage
         }
         delay(1000); // Small delay before retrying
     }
     Serial.println("Failed to read humidity after retries!");
+	Serial.println(hum);
     return -999.0; // Error code
 }
-
 float LDRToLux(float LDR)
 {
     return 10837*exp(-1.07*map(LDR,0,4095,0,3.3)); // Convert LDR voltage to lux
